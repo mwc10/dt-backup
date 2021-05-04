@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use chrono::NaiveDate;
+use chrono::{DateTime, FixedOffset, TimeZone};
 use scraper::{ElementRef, Html, Selector};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,9 +19,11 @@ impl<'a> TalkInfo<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Talk<'a> {
-    pub date: NaiveDate,
+    pub date: DateTime<FixedOffset>,
     pub title: &'a str,
+    /// relative URL to mp3 file
     pub mp3: &'a str,
+    /// relative URL to transcript PDF
     pub transcript: Option<&'a str>,
 }
 
@@ -69,7 +71,7 @@ fn parse_talk(el: ElementRef) -> Result<Talk> {
     })
 }
 
-fn get_date(url: &str) -> Result<NaiveDate> {
+fn get_date(url: &str) -> Result<DateTime<FixedOffset>> {
     let mut components = url.split('/').skip(1);
     let base = components
         .next()
@@ -91,5 +93,10 @@ fn get_date(url: &str) -> Result<NaiveDate> {
     // the other RSS feed listed those talks as happening on the first of the month
     let day = filename[4..6].parse().unwrap_or(1);
 
-    Ok(NaiveDate::from_ymd(year, month, day))
+    const HOUR: i32 = 3600;
+    let datetime = FixedOffset::west(8 * HOUR)
+        .ymd(year, month, day)
+        .and_hms(18, 0, 0);
+
+    Ok(datetime)
 }
