@@ -14,6 +14,7 @@ mod splash;
 const TALKS_ARCHIVE: &str = "https://www.dhammatalks.org/mp3_index.html";
 const TALKS_ROOT: &str = "https://www.dhammatalks.org";
 
+const FEED_ROOT: &str = "http://mwc10.github.io/dt-backup/";
 const FEED_XML: &str = "dhammatalks-evening.xml";
 const FEED_SPLASH: &str = "index.html";
 const FEED_ASSETS: &str = "assets/";

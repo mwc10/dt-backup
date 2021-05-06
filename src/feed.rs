@@ -1,7 +1,12 @@
 use crate::scrape::{Talk, TalkInfo};
 use anyhow::{Context, Result};
-use rss::{Category, ChannelBuilder, Enclosure, Guid, Item};
-use std::{fmt::Write as _, io::Write};
+use rss::{
+    extension::itunes::{
+        self, ITunesCategory, ITunesChannelExtension, ITunesChannelExtensionBuilder,
+    },
+    Category, ChannelBuilder, Enclosure, Guid, Item,
+};
+use std::{collections::HashMap, fmt::Write as _, io::Write};
 
 const TITLE: &str = "Dhammatalks.org Evening Talks";
 const LINK: &str = "http://dhammatalks.org";
@@ -19,6 +24,13 @@ pub fn generate_feed(archive: &TalkInfo, feed: impl Write) -> Result<()> {
 
     let items = talks_into_items(talks);
 
+    let namespaces = {
+        let mut m = HashMap::new();
+        m.insert("itunes".to_string(), itunes::NAMESPACE.to_string());
+        m
+    };
+    let itunes = itunes_ext();
+
     let channel = ChannelBuilder::default()
         .title(TITLE)
         .link(LINK)
@@ -28,11 +40,30 @@ pub fn generate_feed(archive: &TalkInfo, feed: impl Write) -> Result<()> {
         .categories(categories)
         .items(items)
         .pub_date(chrono::Utc::now().to_rfc2822())
+        .namespaces(namespaces)
+        .itunes_ext(itunes)
         .build()
         .expect("infailable channel building");
 
     channel.write_to(feed).context("writing feed out")?;
     Ok(())
+}
+
+fn itunes_ext() -> ITunesChannelExtension {
+    let category = ITunesCategory {
+        text: "Religion & Spirituality".into(),
+        subcategory: Some(Box::new(ITunesCategory {
+            text: "Buddhism".into(),
+            subcategory: None,
+        })),
+    };
+
+    ITunesChannelExtensionBuilder::default()
+        .author("Thanissaro Bhikkhu".to_string())
+        .image(format!("{}{}", crate::FEED_ROOT, crate::FEED_ART))
+        .categories(vec![category])
+        .build()
+        .expect("infallible")
 }
 
 fn talks_into_items(talks: &[Talk]) -> Vec<Item> {
