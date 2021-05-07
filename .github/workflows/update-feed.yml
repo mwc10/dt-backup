@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  build-feed:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -30,6 +30,7 @@ jobs:
             profile: minimal
             toolchain: stable
             override: true
+      - uses: Swatinem/rust-cache@v1
       # Make feed
       - run: cargo run --release -- dist/
       # Deploy to GitHub Pages
